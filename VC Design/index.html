@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>VC Design</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-iconic-font/2.2.0/css/material-design-iconic-font.min.css">
+</head>
+<body>
+    <div class="wrapper">
+        <div class="tab-container">
+            <div class="tab-content">
+                <div class="content active" id="products">
+                    <div class="navbar">
+                        <div class="left">
+                            <div class="header">Product List</div>
+                        </div>
+                        <div class="right">
+                            <div class="flex">
+                                <div class="btns">
+                                    <button class="btn add" v-on:click="refreshProductList"><i class="zmdi zmdi-replay"></i>Refresh</button>
+                                    <button class="btn add" data-target="productAdd" v-on:click="showModal($event)"><i class="zmdi zmdi-plus"></i>Add new...</button>
+                                </div>
+                                <div class="searchbox">
+                                    <input type="text" class="control" placeholder="Search..." v-model="searchProducts">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-list">
+                        <div class="product" v-for="item in filteredProducts">
+                            <div class="img-container" v-if="item.Poster.length > 0">
+                                <img :src="item.Poster" alt="" class="thumb">
+                            </div>
+                            <div class="img-container" v-else>
+                                <img src="https://placehold.it/400?t=NO%20IMAGE" alt="" class="thumb">
+                            </div>
+                            <div class="details">
+                                <div class="product-price">
+                                    <span>${{item.Price}}</span>
+                                </div>
+                                <span class="product-title">{{item.Name}}</span>						
+                                <div class="genres">
+                                    <span class="product-genre">{{item.Category}}</span>
+                                </div>							
+                            </div>
+                            <button class="btn delete" data-target="productDelete" v-on:click="showModal($event); productToDelete = item.IdProduct"><i class="zmdi zmdi-close"></i></button>
+                            <button class="btn edit" data-target="productEdit" v-on:click="showModal($event); setEditProductView(item)"><i class="zmdi zmdi-edit"></i></button>
+                            <button class="btn add" v-on:click="addToCheckout(item.IdProduct)">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="content" id="clients">
+                    <div class="navbar">
+                        <div class="left">
+                            <div class="header">Customer list</div>
+                        </div>
+                        <div class="right">
+                            <div class="flex">
+                                <div class="btns">
+                                    <button class="btn add" v-on:click="refreshCustomerList"><i class="zmdi zmdi-replay"></i>Refresh</button>
+                                    <button class="btn add" data-target="customerAdd" v-on:click="showModal($event)"><i class="zmdi zmdi-plus"></i>Add new...</button>
+                                </div>
+                                <div class="searchbox">
+                                    <input type="text" class="control" placeholder="Search..." v-model="searchCustomers">
+                                </div>
+                            </div>                            
+                        </div>
+                    </div>
+                    <br />
+                    <table class="table clients">
+                        <thead>
+                            <tr>
+                                <th>DNI</th>
+                                <th>Firstname</th>
+                                <th>Lastname</th>
+                                <th>Address</th>
+                                <th>Gender</th>
+                                <th>Phone</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in filteredCustomers">
+                                <td class="dni">{{item.DNI}}</td>
+                                <td>{{item.Firstname}}</td>
+                                <td>{{item.Lastname}}</td>
+                                <td>{{item.Address}}</td>
+                                <td>{{item.Gender}}</td>
+                                <td>{{item.Phone}}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn edit" data-target="customerEdit" v-on:click="showModal($event); setEditCustomerView(item)"><i class="zmdi zmdi-edit"></i>Edit</button>
+                                        <button class="btn delete" data-target="customerDelete" v-on:click="showModal($event); customerToDelete = item.IdCustomer"><i class="zmdi zmdi-delete"></i>Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="content" id="rents">
+                    <div class="navbar">
+                        <div class="left">
+                            <div class="header">Rents list</div>
+                        </div>
+                        <div class="right">
+                            <div class="flex">
+                                <div class="btns">
+                                    <button class="btn add" v-on:click="reloadRents"><i class="zmdi zmdi-replay"></i>Refresh</button>
+                                </div>
+                                <div class="searchbox">
+                                    <input type="text" class="control" placeholder="Search..." v-model="searchRents">
+                                </div>
+                            </div>                            
+                        </div>
+                    </div>
+                    <br />
+                    <table class="table clients">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Return Date</th>
+                                <th>Status</th>
+                                <th>Total Amount</th>
+                                <th>Fine Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in filteredRents">
+                                <td>{{item.IdRent}}</td>
+                                <td>{{item.Customer}}</td>
+                                <td>{{item.Date}}</td>
+                                <td>{{item.ReturnDate}}</td>
+                                <td>{{item.Status}}</td>
+                                <td>{{item.TotalAmount}}</td>
+                                <td>{{item.DueAmount}}</td>
+                                <td>
+                                    <select name="" id="" v-on:change='changeRentStatus($event, item.IdRent)' class="rentChanger">
+                                        <option value="" selected hidden>Mark as</option>
+                                        <option value="3">COMPLETE</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="content" id="reports">
+                    <h1>REPORTS</h1>
+                </div>
+                <div class="content" id="configuration">
+                    <div class="navbar">
+                        <div class="left">
+                            <div class="header">Configuration</div>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="configuration">
+                        <div class="line">
+                            <label for="">Tax (%): </label>
+                            <input type="text" class="control" v-model="rentConfig.tax" v-on:input="updateCheckoutDetails">
+                        </div>
+                        <br>
+                        <div class="line">
+                            <label for="">Fine per day (%): </label>
+                            <input type="text" class="control" v-model="rentConfig.finePerDay">
+                        </div>
+                        <br>
+                        <div class="line">
+                            <button class="btn save" v-on:click="saveRentConfigTunnel">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-list">
+                <a href="#" :data-value="item.header" v-on:click="setMenuActive($event)" :class="['tab', {active: item.active}]" v-for="item in menuList">
+                    <i :class="['zmdi zmdi-' + item.icon]"></i>
+                    {{item.header}}
+                </a>
+            </div>
+        </div>
+        <div class="receipt-container">
+            <div class="receipt">
+                <div class="receipt-inner">
+                    <div class="receipt-detail">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ITEM</th>
+                                    <th>QUANTITY</th>
+                                    <th>PRICE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in checkoutList">
+                                    <td class="item">
+                                        <div>
+                                            <button class="btn delete" v-on:click="removeFromCheckout(item.IdProduct)"><i class="zmdi zmdi-delete"></i></button>
+                                            <span class="title" :title="item.ProductName">{{item.ProductName}}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="quantity">
+                                            <button class="btn decrement" v-on:click="removeQuantityCheckOut(item.IdProduct)"><i class="zmdi zmdi-minus"></i></button>
+                                            <span>{{item.ProductQuantity}}</span>
+                                            <button class="btn increment" v-on:click="addQuantityCheckOut(item.IdProduct)"><i class="zmdi zmdi-plus"></i></button>
+                                        </div>
+                                    </td>
+                                    <td><span>${{item.ProductPrice}}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="receipt-date">
+                        <div class="line">
+                            <input type="date" :min="getToday()" v-model="checkOutDetails.returnDate" v-on:change="updateCheckoutDetails">
+                            <span class="icon">
+                                <i class="zmdi zmdi-calendar"></i>
+                                <span>RETURN DATE</span>
+                            </span>
+                        </div>
+                        <div class="line">
+                            <button class="btn" data-target="customerModal" v-on:click="showModal($event)"><i class="zmdi zmdi-plus"></i></button>
+                            <button class="btn" v-on:click="clearCheckOutCustomer"><i class="zmdi zmdi-delete"></i></button>
+                            <input type="text" placeholder="Customer" readonly :value="getCustomerFullName(checkOutDetails.idCustomer)">
+                        </div>
+                    </div>
+                    <div class="receipt-bottom">
+                        <!-- <div class="line">
+                            <div class="head">Discount</div>
+                            <div class="value">
+                                <span>0.00</span>
+                            </div>
+                        </div> -->
+                        <div class="line">
+                            <div class="head">Subtotal: </div>
+                            <div class="value">
+                                <span>${{checkOutDetails.subtotal}}</span>
+                            </div>
+                        </div>
+                        <div class="line">
+                            <div class="head">Tax ({{(rentConfig.tax * 100).toFixed(2)}}%): </div>
+                            <div class="value">
+                                <span>${{checkOutDetails.tax}}</span>
+                            </div>
+                        </div>
+                        <div class="line">
+                            <div class="head total">TOTAL: </div>
+                            <div class="value">
+                                <span>${{checkOutDetails.total}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="receipt-btn-group">
+                        <button class="btn reset" v-on:click="clearReceipt">Clear</button>
+                        <button class="btn save" v-on:click="sendInvoice">Charge</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!--CUSTOMER MODAL-->
+        <div class="modal-backdrop" id="customerModalShadow"></div>
+        <div class="modal" id="customerModal">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Select a customer</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="customerModal" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="customer-listview">
+                    <div class="search">
+                        <input type="text" placeholder="Search customer..." v-model="searchCustomersModal">
+                    </div>
+                    <div class="row" v-for="c in filteredCustomersModal" data-target="customerModal" v-on:click="setCheckOutCustomer($event, c.IdCustomer)">
+                        <div class="dni">{{c.DNI}}</div>
+                        <div class="name">{{c.Firstname}} {{c.Lastname}}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn cancel" data-target="customerModal" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--PRODUCT ADD MODAL-->
+        <div class="modal-backdrop" id="productAddShadow"></div>
+        <div class="modal" id="productAdd">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Add a product</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="productAdd" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <input type="text" class="control" placeholder="Product name" v-model="productAddModel.Name">
+                    <textarea cols="30" rows="10" class="control" placeholder="Product Description" v-model="productAddModel.Description"></textarea>
+                    <input type="text" class="control" placeholder="Product price" v-model="productAddModel.Price">
+                    <select name="" id="" class="control" v-model="productAddModel.Category">
+                        <option value="">Category</option>
+                        <option value="MOVIE">MOVIE</option>
+                        <option value="VIDEOGAME">VIDEOGAME</option>
+                        <option value="MUSIC">MUSIC</option>
+                    </select>
+                    <input type="text" class="control" placeholder="Stock" v-model="productAddModel.Stock">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="productAdd" v-on:click="addProduct($event)">Save</button>
+                        <button class="btn cancel" data-target="productAdd" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--PRODUCT EDIT MODAL-->
+        <div class="modal-backdrop" id="productEditShadow"></div>
+        <div class="modal" id="productEdit">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Edit a product</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="productEdit" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <input type="text" class="control" placeholder="Product name" v-model="productEditModel.Name">
+                    <textarea cols="30" rows="10" class="control" placeholder="Product Description" v-model="productEditModel.Description"></textarea>
+                    <input type="text" class="control" placeholder="Product price" v-model="productEditModel.Price">
+                    <select name="" id="" class="control" v-model="productEditModel.Category">
+                        <option value="">Category</option>
+                        <option value="MOVIE">MOVIE</option>
+                        <option value="VIDEOGAME">VIDEOGAME</option>
+                        <option value="MUSIC">MUSIC</option>
+                    </select>
+                    <input type="text" class="control" placeholder="Stock" v-model="productEditModel.Stock">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="productEdit" v-on:click="editProduct($event)">Save</button>
+                        <button class="btn cancel" data-target="productEdit" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!--PRODUCT DELETE MODAL-->
+        <div class="modal-backdrop" id="productDeleteShadow"></div>
+        <div class="modal" id="productDelete">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Delete a product</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="productDelete" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <h3>Are you sure you want to delete this?</h3>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="productDelete" v-on:click="deleteProduct($event)">CONFIRM</button>
+                        <button class="btn cancel" data-target="productDelete" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--CUSTOMER ADD MODAL-->
+        <div class="modal-backdrop" id="customerAddShadow"></div>
+        <div class="modal" id="customerAdd">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Add a client</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="customerAdd" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form scroll">
+                    <input type="text" class="control" placeholder="DNI" v-model="customerAddModel.DNI">
+                    <input type="text" class="control" placeholder="Firstname" v-model="customerAddModel.Firstname">
+                    <input type="text" class="control" placeholder="Lastname" v-model="customerAddModel.Lastname">
+                    <textarea name="" id="" cols="30" rows="10" class="control" placeholder="Address" v-model="customerAddModel.Address"></textarea>
+                    <select name="" id="" class="control" v-model="customerAddModel.Gender">
+                        <option value="">Gender</option>
+                        <option value="F">Female</option>
+                        <option value="M">Male</option>
+                    </select>
+                    <input type="text" class="control" placeholder="Phone" v-model="customerAddModel.Phone">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="customerAdd" v-on:click="addCustomer($event)">Save</button>
+                        <button class="btn cancel" data-target="customerAdd" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--CUSTOMER EDIT MODAL-->
+        <div class="modal-backdrop" id="customerEditShadow"></div>
+        <div class="modal" id="customerEdit">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Edit a client</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="customerEdit" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form scroll">
+                    <input type="text" class="control" placeholder="DNI" v-model="customerEditModel.DNI">
+                    <input type="text" class="control" placeholder="Firstname" v-model="customerEditModel.Firstname">
+                    <input type="text" class="control" placeholder="Lastname" v-model="customerEditModel.Lastname">
+                    <textarea name="" id="" cols="30" rows="10" class="control" placeholder="Address" v-model="customerEditModel.Address"></textarea>
+                    <select name="" id="" class="control" v-model="customerEditModel.Gender">
+                        <option value="">Gender</option>
+                        <option value="F">Female</option>
+                        <option value="M">Male</option>
+                    </select>
+                    <input type="text" class="control" placeholder="Phone" v-model="customerEditModel.Phone">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="customerEdit" v-on:click="editCustomer($event)">Save</button>
+                        <button class="btn cancel" data-target="customerEdit" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!--PRODUCT DELETE MODAL-->
+        <div class="modal-backdrop" id="customerDeleteShadow"></div>
+        <div class="modal" id="customerDelete">
+            <div class="modal-header">
+                <div class="left">
+                    <div class="modal-title">Delete a client</div>
+                </div>
+                <div class="right">
+                    <button class="btn close-modal" data-target="customerDelete" v-on:click="hideModal($event)"><i class="zmdi zmdi-close"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <h3>Are you sure you want to delete this?</h3>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="left"></div>
+                <div class="right">
+                    <div class="btn-group">
+                        <button class="btn save" data-target="customerDelete" v-on:click="deleteCustomer($event)">CONFIRM</button>
+                        <button class="btn cancel" data-target="customerDelete" v-on:click="hideModal($event)">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
